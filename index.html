@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>Handy Island Vertragsmanager</title>
+    <style>
+      :root {
+        --bg: #eef1f6;
+        --surface: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --faint: #94a3b8;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --primary: #4f46e5;
+        --primary-hover: #4338ca;
+        --primary-soft: #eef2ff;
+        --danger: #e11d48;
+        --danger-soft: #fff1f2;
+        --success: #059669;
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+        --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+        --shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.18);
+        --radius: 10px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+          Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      header {
+        padding: 0.9rem 1.5rem;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+      }
+      header h1 {
+        font-size: 1.15rem;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+      .app-subtitle { font-weight: 500; color: var(--muted); font-size: 0.92rem; margin-left: 0.35rem; }
+      .sync-status {
+        flex: 1;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .sync-status::before {
+        content: '';
+        width: 9px; height: 9px; border-radius: 50%;
+        background: #cbd5e1;
+        display: inline-block;
+      }
+      .sync-status.online { color: var(--success); }
+      .sync-status.online::before { background: var(--success); }
+
+      button {
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, color 0.15s;
+      }
+      .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+      .toolbar button {
+        padding: 0.5rem 0.9rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .toolbar button:hover { background: #f8fafc; border-color: var(--faint); }
+      .toolbar button.primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+        font-weight: 600;
+        box-shadow: var(--shadow-sm);
+      }
+      .toolbar button.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+      .container { padding: 1.25rem 1.5rem; }
+
+      .tabs { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1rem; }
+      .tabs button {
+        padding: 0.4rem 0.9rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .tabs button:hover { background: #f8fafc; color: var(--text); }
+      .tabs button.active {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+        font-weight: 600;
+        box-shadow: var(--shadow-sm);
+      }
+      .tabs button .badge {
+        display: inline-block;
+        margin-left: 0.45rem;
+        padding: 0 0.45rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.08);
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+      .tabs button.active .badge { background: rgba(255, 255, 255, 0.25); }
+
+      .search { margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.6rem; }
+      .year-filter {
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 0.9rem;
+        cursor: pointer;
+        color-scheme: light;
+      }
+      .year-filter:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
+      .search input {
+        width: 340px; max-width: 100%;
+        padding: 0.55rem 0.85rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 0.9rem;
+      }
+      .search input::placeholder { color: var(--faint); }
+      .count { color: var(--muted); margin-left: 0.7rem; font-size: 0.85rem; }
+
+      .reminder-toggle {
+        margin-left: auto;
+        padding: 0.5rem 0.9rem;
+        border: 1px solid #fcd34d;
+        border-radius: 8px;
+        background: #fffbeb;
+        color: #b45309;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .reminder-toggle:hover { background: #fef3c7; }
+      .reminder-toggle.active { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+      .reminder-toggle .rbadge {
+        display: inline-block; margin-left: 0.35rem; padding: 0 0.45rem;
+        border-radius: 999px; background: rgba(180, 83, 9, 0.15); font-size: 0.75rem;
+      }
+      .reminder-toggle.active .rbadge { background: rgba(255, 255, 255, 0.3); }
+
+      /* Sözleşme bitişi sütunu durumları */
+      td.end-soon { color: #b45309; font-weight: 600; }
+      td.end-overdue { color: var(--danger); font-weight: 600; }
+      td.end-ok { color: var(--text); }
+      td.end-na { color: var(--faint); }
+
+      .checkrow { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text); cursor: pointer; }
+      .checkrow input { width: auto; }
+
+      .settings-hint { color: var(--muted); font-size: 0.78rem; margin: 0 0 0.7rem; }
+      .firma-rem-row {
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9;
+      }
+      .firma-rem-row .frm-name { flex: 1; font-size: 0.88rem; font-weight: 500; }
+      .firma-rem-row input {
+        width: 90px; padding: 0.4rem 0.5rem;
+        border: 1px solid var(--border-strong); border-radius: 7px;
+        background: var(--surface); color: var(--text); font-size: 0.88rem;
+      }
+      .firma-rem-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+      .firma-rem-row .frm-unit { color: var(--muted); font-size: 0.82rem; width: 24px; }
+
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+      }
+      table { border-collapse: collapse; width: 100%; table-layout: auto; }
+      th, td {
+        padding: 0.5rem 0.7rem;
+        text-align: left;
+        font-size: 0.82rem;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+      th {
+        background: #f8fafc;
+        position: sticky; top: 0;
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+        z-index: 1;
+      }
+      tbody td { border-bottom: 1px solid #f1f5f9; }
+      tbody tr:hover td { background: #f8fafc; }
+      tr.group td {
+        background: #f1f5f9;
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+      }
+      .status-select {
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        color-scheme: light;
+        font-family: inherit;
+      }
+      .status-select:focus { outline: none; box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+
+      td.actions { white-space: nowrap; }
+      td.actions button {
+        padding: 0.3rem 0.7rem;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-right: 0.35rem;
+      }
+      .wa { background: #dcfce7; color: #15803d; }
+      .wa:hover { background: #bbf7d0; }
+      .edit { background: var(--primary-soft); color: var(--primary); }
+      .edit:hover { background: #e0e7ff; }
+      .del { background: var(--danger-soft); color: var(--danger); }
+      .del:hover { background: #ffe4e6; }
+      .empty { padding: 2.5rem; text-align: center; color: var(--faint); }
+      .cap-note { padding: 0.8rem; text-align: center; color: var(--muted); background: #fffbeb; font-size: 0.82rem; }
+
+      /* Modal */
+      .overlay {
+        position: fixed; inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(2px);
+        display: none; align-items: center; justify-content: center; padding: 1rem;
+        z-index: 10;
+      }
+      .overlay.open { display: flex; }
+      .modal {
+        background: var(--surface);
+        border-radius: 14px;
+        width: 660px; max-width: 100%; max-height: 90vh; overflow: auto;
+        padding: 1.5rem 1.6rem;
+        box-shadow: var(--shadow-lg);
+      }
+      .modal h2 { margin: 0 0 1.3rem; font-size: 1.2rem; font-weight: 650; letter-spacing: -0.01em; }
+
+      .section { margin-bottom: 1.3rem; }
+      .section-title {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding-bottom: 0.45rem;
+        margin-bottom: 0.85rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+      .field { display: flex; flex-direction: column; }
+      .field.full { grid-column: 1 / -1; }
+      .field label { font-size: 0.78rem; font-weight: 500; color: var(--muted); margin-bottom: 0.3rem; }
+      .field label .hint { color: var(--faint); font-weight: 400; font-size: 0.72rem; }
+      .field input, .field select {
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 0.9rem;
+        font-family: inherit;
+      }
+      .field input[type="date"], .field select { color-scheme: light; }
+      .field select { cursor: pointer; }
+      .field input:focus, .field select:focus, .search input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      }
+
+      .modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.5rem; }
+      .modal-actions button { padding: 0.6rem 1.2rem; border: 1px solid transparent; border-radius: 8px; font-size: 0.9rem; font-weight: 500; }
+      .save { background: var(--primary); color: #fff; font-weight: 600; box-shadow: var(--shadow-sm); }
+      .save:hover { background: var(--primary-hover); }
+      .cancel { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
+      .cancel:hover { background: #f8fafc; }
+
+      /* İstatistik */
+      .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.7rem; margin-bottom: 1.2rem; }
+      .stat-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem; }
+      .stat-card .num { font-size: 1.6rem; font-weight: 700; color: var(--text); }
+      .stat-card .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+      .stat-card.accent .num { color: var(--primary); }
+      .stat-card.warn .num { color: #b45309; }
+      .stat-section { margin-bottom: 1.2rem; }
+      .stat-section h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 0.6rem; }
+      .bar-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; font-size: 0.85rem; }
+      .bar-row .bl { width: 150px; flex-shrink: 0; }
+      .bar-row .bar { flex: 1; height: 16px; background: #eef2f7; border-radius: 999px; overflow: hidden; }
+      .bar-row .bar > div { height: 100%; background: var(--primary); border-radius: 999px; }
+      .bar-row .bn { width: 44px; text-align: right; flex-shrink: 0; font-weight: 600; }
+
+      .danger-title { color: var(--danger) !important; border-bottom-color: #fecdd3 !important; }
+      .danger-btn {
+        padding: 0.6rem 1.1rem; border: 1px solid var(--danger); border-radius: 8px;
+        background: var(--danger-soft); color: var(--danger); font-weight: 600; font-size: 0.9rem;
+      }
+      .danger-btn:hover { background: #ffe4e6; }
+
+      /* Yükleme / ilerleme */
+      .loading-box {
+        background: var(--surface); border-radius: 14px; padding: 1.6rem 1.8rem;
+        width: 420px; max-width: 100%; box-shadow: var(--shadow-lg); text-align: center;
+      }
+      .loading-title { font-size: 1.05rem; font-weight: 650; margin-bottom: 1rem; }
+      .progress {
+        height: 12px; background: #eef2f7; border-radius: 999px; overflow: hidden;
+        border: 1px solid var(--border);
+      }
+      .progress-bar {
+        height: 100%; width: 0%; background: var(--primary);
+        border-radius: 999px; transition: width 0.15s ease;
+      }
+      .loading-label { margin-top: 0.6rem; font-size: 0.9rem; font-weight: 600; color: var(--text); }
+
+      .toast {
+        position: fixed; bottom: 1.4rem; right: 1.4rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--success);
+        padding: 0.85rem 1.1rem;
+        border-radius: 10px;
+        max-width: 380px;
+        display: none;
+        box-shadow: var(--shadow-md);
+        color: var(--text);
+        font-size: 0.88rem;
+      }
+      .toast.show { display: block; }
+
+      /* Kilit ekranı */
+      .lock-overlay {
+        position: fixed; inset: 0; z-index: 100;
+        background: var(--bg);
+        display: none; align-items: center; justify-content: center;
+      }
+      .lock-overlay.open { display: flex; }
+      .lock-box {
+        background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+        box-shadow: var(--shadow-lg); padding: 2rem; width: 360px; max-width: 90%; text-align: center;
+      }
+      .lock-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; }
+      .lock-box input {
+        width: 100%; padding: 0.65rem 0.8rem; font-size: 1rem;
+        border: 1px solid var(--border-strong); border-radius: 8px; color-scheme: light;
+      }
+      .lock-box input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+      .lock-error { color: var(--danger); font-size: 0.85rem; min-height: 1.1rem; margin-top: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Handy Island <span class="app-subtitle">Vertragsmanager</span></h1>
+      <span class="sync-status" id="syncStatus" title="Netzwerk-Synchronisation">Offline</span>
+      <div class="toolbar">
+        <button class="primary" id="newBtn">Neuer Eintrag</button>
+        <button id="importBtn">Excel importieren</button>
+        <button id="exportBtn">Excel exportieren</button>
+        <button id="templateBtn">Vorlage herunterladen</button>
+        <button id="statsBtn">Statistik</button>
+        <button id="settingsBtn">Einstellungen</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="tabs" id="firmaTabs"></div>
+
+      <div class="search">
+        <select id="yearFilter" class="year-filter" title="Nach Jahr filtern"></select>
+        <select id="statusFilter" class="year-filter" title="Nach Status filtern"></select>
+        <input id="searchInput" type="text" placeholder="Suchen (Name, Rufnummer, Tarif...)" />
+        <span class="count" id="count"></span>
+        <button id="reminderToggle" class="reminder-toggle" style="display:none">
+          Bald ablaufende Verträge <span class="rbadge" id="reminderCount">0</span>
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="theadRow"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Ekle/Düzenle Modalı -->
+    <div class="overlay" id="overlay">
+      <div class="modal">
+        <h2 id="modalTitle">Neuer Eintrag</h2>
+        <form id="form">
+          <datalist id="firmaList"></datalist>
+          <div id="formGrid"></div>
+          <div class="modal-actions">
+            <button type="button" class="cancel" id="cancelBtn">Abbrechen</button>
+            <button type="submit" class="save">Speichern</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Ayarlar Modalı -->
+    <div class="overlay" id="settingsOverlay">
+      <div class="modal" style="width: 460px">
+        <h2>Einstellungen</h2>
+        <div class="section">
+          <div class="section-title">Standard-Erinnerung (alle Anbieter)</div>
+          <div class="field full">
+            <label for="reminderPreset">Wie viele Tage vor Ablauf erinnern</label>
+            <select id="reminderPreset">
+              <option value="7">Letzte Woche (7 Tage)</option>
+              <option value="14">Letzte 2 Wochen (14 Tage)</option>
+              <option value="30">Letzter Monat (30 Tage)</option>
+              <option value="60">Letzte 2 Monate (60 Tage)</option>
+              <option value="90">Letzte 3 Monate (90 Tage)</option>
+              <option value="180">Letzte 6 Monate (180 Tage)</option>
+              <option value="custom">Benutzerdefiniert (Tage)...</option>
+            </select>
+          </div>
+          <div class="field full" id="customDaysWrap" style="display:none; margin-top:0.7rem">
+            <label for="reminderDays">Benutzerdefinierte Tage</label>
+            <input id="reminderDays" type="number" min="1" max="3650" />
+          </div>
+          <label class="checkrow" style="margin-top:0.8rem">
+            <input type="checkbox" id="notifyOnStartup" />
+            <span>Beim Start Windows-Benachrichtigung anzeigen</span>
+          </label>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Anbieterspezifische Erinnerung</div>
+          <p class="settings-hint">Leere Anbieter verwenden die Standardzeit.</p>
+          <div id="firmaReminderList"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Sicherheit & Backup</div>
+          <div class="field full">
+            <label for="curPw">Aktuelles Passwort (falls gesetzt)</label>
+            <input id="curPw" type="password" autocomplete="off" placeholder="Nur wenn ein Passwort gesetzt ist" />
+          </div>
+          <div class="grid" style="margin-top:0.7rem">
+            <div class="field">
+              <label for="newPw">Neues Passwort</label>
+              <input id="newPw" type="password" autocomplete="new-password" placeholder="Leer = Passwort entfernen" />
+            </div>
+            <div class="field">
+              <label for="newPw2">Neues Passwort (Wdh.)</label>
+              <input id="newPw2" type="password" autocomplete="new-password" />
+            </div>
+          </div>
+          <div style="display:flex; gap:0.6rem; margin-top:0.8rem; flex-wrap:wrap">
+            <button type="button" class="cancel" id="savePwBtn">Passwort speichern</button>
+            <button type="button" class="cancel" id="backupBtn">Backup erstellen</button>
+          </div>
+          <p class="settings-hint" style="margin-top:0.6rem">Tägliches Auto-Backup wird automatisch erstellt. Hinweis: Das Passwort sperrt die App, verschlüsselt aber die Datei nicht.</p>
+        </div>
+
+        <div class="section">
+          <div class="section-title danger-title">Gefahrenzone</div>
+          <p class="settings-hint">Dieser Vorgang kann nicht rückgängig gemacht werden. Alle Einträge werden dauerhaft gelöscht.</p>
+          <button type="button" class="danger-btn" id="clearAllBtn">Alle Einträge löschen</button>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel" id="settingsCancel">Abbrechen</button>
+          <button type="button" class="save" id="settingsSave">Speichern</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- İstatistik Modalı -->
+    <div class="overlay" id="statsOverlay">
+      <div class="modal" style="width: 720px">
+        <h2>Statistik</h2>
+        <div id="statsBody"></div>
+        <div class="modal-actions">
+          <button type="button" class="cancel" id="statsClose">Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- İçe aktarma yükleme göstergesi -->
+    <div class="overlay" id="loadingOverlay">
+      <div class="loading-box">
+        <div class="loading-title" id="loadingTitle">Excel wird importiert</div>
+        <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="loading-label" id="loadingLabel">0 %</div>
+        <p class="settings-hint" style="margin:0.6rem 0 0">Bitte warten, Einträge werden verarbeitet...</p>
+      </div>
+    </div>
+
+    <!-- Kilit ekranı -->
+    <div class="lock-overlay" id="lockOverlay">
+      <div class="lock-box">
+        <div class="lock-title">Handy Island</div>
+        <p class="settings-hint" style="margin:0 0 1rem">Bitte Passwort eingeben</p>
+        <input id="lockInput" type="password" placeholder="Passwort" autocomplete="off" />
+        <div class="lock-error" id="lockError"></div>
+        <button id="lockBtn" class="save" style="width:100%; margin-top:0.9rem; padding:0.7rem">Entsperren</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="logic.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>

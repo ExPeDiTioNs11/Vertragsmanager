@@ -1,0 +1,19 @@
+# Bağımlılıklar
+node_modules/
+
+# Build çıktıları
+dist/
+dist.zip
+*.zip
+*.7z
+
+# Yerel veritabanı / yedekler
+*.db
+*.db-wal
+*.db-shm
+backups/
+
+# Geçici / log
+*.log
+.DS_Store
+Thumbs.db

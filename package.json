@@ -1,0 +1,52 @@
+{
+  "name": "handy-island-vertragsmanager",
+  "version": "1.0.0",
+  "description": "Handy Island Vertragsmanager – Verwaltung von Mobilfunkverträgen, Kunden und Ablauf-Erinnerungen",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/*.test.js\" && electron test/db.electron.js",
+    "test:logic": "node --test \"test/*.test.js\"",
+    "test:db": "electron test/db.electron.js",
+    "postinstall": "electron-builder install-app-deps",
+    "dist": "electron-builder",
+    "dist:portable": "electron-builder --win portable"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "electron": "^33.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "xlsx": "^0.18.5"
+  },
+  "build": {
+    "appId": "com.handyisland.vertragsmanager",
+    "productName": "Handy Island Vertragsmanager",
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!dist*",
+      "!**/*.zip",
+      "!**/*.7z",
+      "!test/**",
+      "!**/*.md"
+    ],
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        { "target": "nsis", "arch": "x64" },
+        { "target": "portable", "arch": "x64" }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": false
+    }
+  }
+}
