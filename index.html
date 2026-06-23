@@ -490,11 +490,15 @@
               <input id="newPw2" type="password" autocomplete="new-password" />
             </div>
           </div>
+          <label class="checkrow" style="margin-top:0.8rem">
+            <input type="checkbox" id="autoBackup" />
+            <span>Automatisches Backup (alle 24 Stunden, solange die App läuft)</span>
+          </label>
           <div style="display:flex; gap:0.6rem; margin-top:0.8rem; flex-wrap:wrap">
             <button type="button" class="cancel" id="savePwBtn">Passwort speichern</button>
             <button type="button" class="cancel" id="backupBtn">Backup erstellen</button>
           </div>
-          <p class="settings-hint" style="margin-top:0.6rem">Tägliches Auto-Backup wird automatisch erstellt. Hinweis: Das Passwort sperrt die App, verschlüsselt aber die Datei nicht.</p>
+          <p class="settings-hint" style="margin-top:0.6rem">Backups liegen im Ordner „backups" im App-Datenverzeichnis (letzte 14 werden behalten). Hinweis: Das Passwort sperrt die App, verschlüsselt aber die Datei nicht.</p>
         </div>
 
         <div class="section">

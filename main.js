@@ -78,7 +78,11 @@ ipcMain.handle('fields:get', () => ({ fields: FIELDS, groups: GROUPS, firma: FIR
 
 // ---- IPC: ayarlar ----
 ipcMain.handle('settings:get', () => db.getSettings());
-ipcMain.handle('settings:set', (_e, obj) => db.setSettings(obj));
+ipcMain.handle('settings:set', (_e, obj) => {
+  const s = db.setSettings(obj);
+  manageBackupTimer(); // ayar değişince yedek zamanlayıcısını güncelle
+  return s;
+});
 
 // ---- IPC: hatırlatma bildirimi (renderer hesaplar, ana süreç gösterir) ----
 ipcMain.handle('reminder:notify', (_e, count) => {
@@ -211,6 +215,19 @@ function autoBackup() {
       try { fs.unlinkSync(path.join(dir, files.shift())); } catch {}
     }
   } catch (e) { console.log('autoBackup hata: ' + e.message); }
+}
+
+// Otomatik yedek zamanlayıcısını ayara göre başlat/durdur
+let backupTimer = null;
+function manageBackupTimer() {
+  const enabled = db.getSettings().autoBackup;
+  if (enabled && !backupTimer) {
+    autoBackup(); // hemen bir yedek
+    backupTimer = setInterval(autoBackup, 24 * 60 * 60 * 1000); // 24 saatte bir
+  } else if (!enabled && backupTimer) {
+    clearInterval(backupTimer);
+    backupTimer = null;
+  }
 }
 ipcMain.handle('backup:now', async () => {
   const today = new Date().toISOString().slice(0, 10);
@@ -387,7 +404,7 @@ if (!gotLock) {
     app.setAppUserModelId('com.handyisland.vertragsmanager'); // Windows bildirimleri için
     Menu.setApplicationMenu(null); // üst menü çubuğunu (File/Edit/View...) kaldır
     db.initDatabase();
-    autoBackup(); // günlük otomatik yedek
+    manageBackupTimer(); // ayar açıksa: başlangıçta + 24 saatte bir otomatik yedek
     createWindow();
     createTray();
     startSync();

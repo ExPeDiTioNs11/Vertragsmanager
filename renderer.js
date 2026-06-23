@@ -835,6 +835,7 @@ function openSettings() {
   }
   $('reminderDays').value = days;
   $('notifyOnStartup').checked = !!settings.notifyOnStartup;
+  $('autoBackup').checked = settings.autoBackup !== false;
   renderFirmaReminderRows();
   $('settingsOverlay').classList.add('open');
 }
@@ -869,6 +870,7 @@ async function saveSettings() {
   settings = await window.api.setSettings({
     reminderDays: days,
     notifyOnStartup: $('notifyOnStartup').checked,
+    autoBackup: $('autoBackup').checked,
     firmaReminderDays: map,
   });
   closeSettings();

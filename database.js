@@ -61,6 +61,7 @@ function initDatabase() {
 const DEFAULT_SETTINGS = {
   reminderDays: 90,
   notifyOnStartup: true,
+  autoBackup: true, // açıkken her 24 saatte bir otomatik yedek
   firmaReminderDays: { vodafone: 30 },
 };
 
@@ -73,6 +74,7 @@ function getSettings() {
     if (SECRET_KEYS.has(r.key)) continue;
     if (r.key === 'reminderDays') out.reminderDays = parseInt(r.value, 10) || DEFAULT_SETTINGS.reminderDays;
     else if (r.key === 'notifyOnStartup') out.notifyOnStartup = r.value === 'true';
+    else if (r.key === 'autoBackup') out.autoBackup = r.value === 'true';
     else if (r.key === 'firmaReminderDays') {
       try { out.firmaReminderDays = JSON.parse(r.value) || {}; } catch { /* varsayılanı koru */ }
     } else out[r.key] = r.value;
